@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/PuerkitoBio/goquery"
+  "github.com/gin-gonic/gin"
   "fmt"
   "strconv"
 	"log"
@@ -62,14 +63,51 @@ type Pinggu struct {
 }
 
 func main() {
-  // seriesb_result := getseriesBrand()
-  // model_result := getmodelBrand()
-  // city_result := getCity()
-  // fmt.Printf("%s",seriesb_result)
-  // fmt.Printf("%s",model_result)
-  // fmt.Printf("%s",city_result)
-  pinggu_result := getPingguinfo()
-  fmt.Printf("%s",pinggu_result)
+  r := gin.Default()
+  r.LoadHTMLGlob("public/*")
+	r.GET("/", Index)
+  r.GET("/series/:seriesID", Findseries)
+  r.GET("/models/:modelsID", Findmodels)
+	r.Run()
+}
+
+
+func Index(c *gin.Context) {
+	city_result := getCity()
+	brand_result := getBrand()
+  series_result := getseriesBrand(1)
+  model_result := getmodelBrand(13)
+	c.HTML(http.StatusOK, "index.html", gin.H{
+		"cities":    city_result,
+		"brands":    brand_result,
+		"series":    series_result,
+		"models":    model_result,
+	})
+	return
+}
+
+func Findseries(c *gin.Context) {
+  c.Header("Access-Control-Allow-Origin", "*")
+  c.Header("Access-Control-Allow-Headers", "access-control-allow-origin, access-control-allow-headers")
+  id := c.Param("seriesID")
+  seriesID, _ := strconv.Atoi(id)
+  series_result := getseriesBrand(seriesID)
+  c.JSON(200, gin.H{
+    "data":  series_result,
+  })
+  return 
+}
+
+func Findmodels(c *gin.Context) {
+  c.Header("Access-Control-Allow-Origin", "*")
+  c.Header("Access-Control-Allow-Headers", "access-control-allow-origin, access-control-allow-headers")
+  id := c.Param("modelsID")
+  modelsID, _ := strconv.Atoi(id)
+  model_result := getmodelBrand(modelsID)
+  c.JSON(200, gin.H{
+    "data":  model_result,
+  })
+  return 
 }
 
 func getBrand() []Qb {
@@ -91,9 +129,9 @@ func getBrand() []Qb {
 	return qb
 }
 
-func getseriesBrand() []Seriesb {
+func getseriesBrand(p int) []Seriesb {
   var props []Seriesb
-	qburl := "https://ssl-meta.che300.com/meta/series/series_brand20.json"
+	qburl := "https://ssl-meta.che300.com/meta/series/series_brand" + strconv.Itoa(p) + ".json"
   client := &http.Client{}
   reqest, _ := http.NewRequest("GET", qburl, nil)
   response,_ := client.Do(reqest)
@@ -111,9 +149,9 @@ func getseriesBrand() []Seriesb {
 	return props
 }
 
-func getmodelBrand() []Modelb {
+func getmodelBrand(p int) []Modelb {
   var props []Modelb
-	qburl := "https://ssl-meta.che300.com/meta/model/model_series2566.json"
+	qburl := "https://ssl-meta.che300.com/meta/model/model_series" + strconv.Itoa(p) + ".json"
   client := &http.Client{}
   reqest, _ := http.NewRequest("GET", qburl, nil)
   response,_ := client.Do(reqest)
@@ -163,8 +201,9 @@ func getPingguinfo() []Pinggu {
 
 	var pinggu []Pinggu
 	doc.Find(".result").Each(func(i int, s *goquery.Selection) {
-     title := s.Find(".rh-wrap h1").Text()
-     fmt.Println(title)
+     // title := s.Find(".rh-wrap h1").Text()
+     price, _ := s.Find("#price").Attr("value")
+     fmt.Println(price)
     // pinggu = append(pinggu, Pinggu{})
 	})
 	return pinggu
