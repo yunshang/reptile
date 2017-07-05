@@ -24,6 +24,7 @@ type Seriesb struct {
 	Series_group_name string `json:"series_group_name"`
 }
 
+ifewfwef
 type Modelb struct {
   Discharge_standard    string `json:"discharge_standard"`
   Gear_type    string `json:"Gear_type"`
