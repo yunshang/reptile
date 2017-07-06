@@ -14,54 +14,55 @@
             <div class="row">
                 <div class="col-md-12">
                     <h2>{{ .title }}</h2>
-                    <form>
+                    <form action="/info" method="POST">
 
                       <div class="form-group">
                         <label for="exampleSelect1">select city</label>
-                        <select class="form-control" id="exampleSelect1">
+                        <select class="form-control" id="exampleSelect1" name="city_id">
                           {{ range $city := .cities }}
-                          <option id="{{$city.City_id}}">{{ $city.City_name }}</option>
+                          <option id="{{$city.City_id}}" value="{{$city.City_id}}" data-prov="{{$city.Prov_id}}">{{ $city.City_name }}</option>
                           {{ end }}
                         </select>
+                          <input id="provid" name="prov_id" value="{{.proid}}" type="hidden" />
                       </div>
 
                       <div class="form-group">
                         <label for="exampleSelect2">select brand</label>
-                        <select class="form-control" id="exampleSelect2">
+                        <select class="form-control" id="exampleSelect2" name="brand_id">
                           {{ range $brand := .brands }}
-                          <option id="{{$brand.Id}}">{{ $brand.Content }}</option>
+                          <option id="{{$brand.Id}}" value="{{$brand.Id}}">{{ $brand.Content }}</option>
                           {{ end }}
                         </select>
                       </div>
 
                       <div class="form-group">
                         <label for="exampleSelect3">select series</label>
-                        <select class="form-control" id="exampleSelect3">
+                        <select class="form-control" id="exampleSelect3" name="series_id">
                           {{ range $serie := .series }}
-                          <option id="{{$serie.Series_id}}">{{ $serie.Series_name }}({{ $serie.Series_group_name }})</option>
+                          <option id="{{$serie.Series_id}}" value="{{$serie.Series_id}}">{{ $serie.Series_name }}({{ $serie.Series_group_name }})</option>
                           {{ end }}
                         </select>
                       </div>
 
                       <div class="form-group">
                         <label for="exampleSelect4">select model</label>
-                        <select class="form-control" id="exampleSelect4">
+                        <select class="form-control" id="exampleSelect4" name="modal_id">
                           {{ range $model := .models }}
-                          <option id="{{$model.Model_id}}">{{ $model.Model_name }}({{ $model.Model_price }}万)</option>
+                          <option id="{{$model.Model_id}}" value="{{$model.Model_id}}">{{ $model.Model_name }}({{ $model.Model_price }}万)</option>
                           {{ end }}
                         </select>
                       </div>
 
                       <div class="form-group">
-                        <label for="example-month-input" class="col-2 col-form-label">data</label>
+                        <label for="example-month-input" class="col-2 col-form-label">date</label>
                         <div class="col-10">
-                          <input class="form-control" type="month" value="2017-07" id="example-month-input">
+                          <input class="form-control" type="month" value="2017-07" id="example-month-input" name="date">
                         </div>
                       </div>
 
                       <div class="form-group">
                         <label for="exampleInputEmail4">里程数</label>
-                        <input type="number" class="form-control"  placeholder="输入里程数">
+                        <input type="number" class="form-control" name="mile" placeholder="输入里程数">
                       </div>
 
                       <button type="submit" class="btn btn-primary">Submit</button>
@@ -72,6 +73,11 @@
     </body>
     <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
     <script>
+      $("#exampleSelect1").change(function() {
+        var provid = $("#exampleSelect1").find("option:selected").attr('data-prov'); 
+        $("#provid").val(provid);
+      });
+
       $("#exampleSelect2").change(function() {
       var brandid = $("#exampleSelect2").find("option:selected").attr('id'); 
       $.ajax({
@@ -83,7 +89,7 @@
           success: function(data) {
             $("#exampleSelect3").empty();
             for (var i = 0, l = data["data"].length; i < l; i ++) {
-              $("#exampleSelect3").append($("<option></option>").attr("id", data["data"][i]["series_id"]).text(data["data"][i]["series_name"] + "(" + data["data"][i]["series_group_name"] + ")"));
+              $("#exampleSelect3").append($("<option></option>").attr("id", data["data"][i]["series_id"]).val(data["data"][i]["series_id"]).text(data["data"][i]["series_name"] + "(" + data["data"][i]["series_group_name"] + ")"));
             }
           }
         });
@@ -100,7 +106,7 @@
           success: function(data) {
             $("#exampleSelect4").empty();
             for (var i = 0, l = data["data"].length; i < l; i ++) {
-              $("#exampleSelect4").append($("<option></option>").attr("id", data["data"][i]["model_id"]).text(data["data"][i]["model_name"] + "(" + data["data"][i]["model_price"] + "万)"));
+              $("#exampleSelect4").append($("<option></option>").attr("id", data["data"][i]["model_id"]).val(data["data"][i]["model_id"]).text(data["data"][i]["model_name"] + "(" + data["data"][i]["model_price"] + "万)"));
             }
           }
         });

@@ -24,7 +24,7 @@ type Seriesb struct {
 	Series_group_name string `json:"series_group_name"`
 }
 
-ifewfwef
+
 type Modelb struct {
   Discharge_standard    string `json:"discharge_standard"`
   Gear_type    string `json:"Gear_type"`
@@ -58,8 +58,8 @@ type Pricehistory struct {
 }
 
 type Pricefuture struct {
-  register_year  string `json:"register_year"`
-  eval_price  string `json:"eval_price"`
+  Register_year  string `json:"register_year"`
+  Eval_price  string `json:"eval_price"`
 }
 
 type Provprices struct {
@@ -113,17 +113,43 @@ type Prices struct {
 }
 
 func main() {
-  // getFutureHistory()
-  // getPriceHistory()
-  fmt.Println(allProvPrices())
   r := gin.Default()
   r.LoadHTMLGlob("public/*")
 	r.GET("/", Index)
+	r.POST("/info", Info)
   r.GET("/series/:seriesID", Findseries)
   r.GET("/models/:modelsID", Findmodels)
 	r.Run()
 }
 
+func Info(c *gin.Context) {
+  cityid := c.PostForm("city_id")
+  provid := c.PostForm("prov_id")
+  brandid := c.PostForm("brand_id")
+  seriesid := c.PostForm("series_id")
+  modalid := c.PostForm("modal_id")
+  date := c.PostForm("date")
+  mile := c.PostForm("mile")
+  year := strings.Split(date,"-")[0]
+  month := strings.Split(date,"-")[1]
+  ci,_ :=  strconv.Atoi(cityid)
+  pr,_ :=  strconv.Atoi(provid)
+  br,_ :=  strconv.Atoi(brandid)
+  se,_ :=  strconv.Atoi(seriesid)
+  mo,_ :=  strconv.Atoi(modalid)
+  mi,_ :=  strconv.Atoi(mile)
+  ye,_ :=  strconv.Atoi(year)
+  mot,_ :=  strconv.Atoi(month)
+  future_result := getFutureHistory(ci,pr,se,mo,ye,mot,mi)
+  history_prices := getPriceHistory(pr,ci,mo,ye,mot,mi,future_result[0].Eval_price)
+  modelInfo, prices_all := allProvPrices(br,se,mo,date,mi)
+	c.HTML(http.StatusOK, "info.html", gin.H{
+    "future_result":  future_result,
+		"history_prices":    history_prices,
+		"modalinfo":    modelInfo,
+		"prices_all":    prices_all,
+	})
+}
 
 func Index(c *gin.Context) {
 	city_result := getCity()
@@ -131,6 +157,7 @@ func Index(c *gin.Context) {
   series_result := getseriesBrand(1)
   model_result := getmodelBrand(13)
 	c.HTML(http.StatusOK, "index.html", gin.H{
+    "proid":     city_result[0].Prov_id,
 		"cities":    city_result,
 		"brands":    brand_result,
 		"series":    series_result,
@@ -246,9 +273,9 @@ func getCity() []City {
 }
 
 
-func getFutureHistory() []Pricefuture {
+func getFutureHistory(provid int,cityid int,seriesid int,modelid int,year int,month int,mile int) []Pricefuture {
   var props []Pricefuture
-	qburl := "https://dingjia.che300.com/app/EvalResult/getFuturePriceTrend?callback=jQuery183048247267398977844_1499239194771&provId=4&cityId=4&seriesId=77&modelId=30304&year=2017&month=6&mile=10&_=1499239195245"
+	qburl := "https://dingjia.che300.com/app/EvalResult/getFuturePriceTrend?callback=jQuery183048247267398977844_1499239194771&provId=" + strconv.Itoa(provid) + "&cityId=" + strconv.Itoa(cityid) + "&seriesId=" + strconv.Itoa(seriesid) + "&modelId=" + strconv.Itoa(modelid) + "&year=" + strconv.Itoa(year) + "&month=" + strconv.Itoa(month) + "&mile= " + strconv.Itoa(mile) + "&_=1499239195245"
   client := &http.Client{}
   reqest, _ := http.NewRequest("GET", qburl, nil)
   response,_ := client.Do(reqest)
@@ -257,26 +284,26 @@ func getFutureHistory() []Pricefuture {
     split_string := strings.Split(strings.Split(string(body),"([{")[1],"}])")[0]
     sss  := strings.Split(split_string,"},{")
     for _, element := range sss {
-      props = append(props, Pricefuture{register_year: strings.Split(strings.Split(element, ":")[1],",")[0], eval_price: strings.Split(element, ":")[2]})
+      props = append(props, Pricefuture{Register_year: strings.Split(strings.Split(element, ":")[1],",")[0], Eval_price: strings.Split(element, ":")[2]})
     }
-    fmt.Println(props)
   }
 
 	return props
 }
 
-func getPriceHistory() []Pricehistory {
+func getPriceHistory(provid int,cityid int,modelid int,regyear int,regmonth int,mileage int,pri string) []Pricehistory {
   var props []Pricehistory
-	qburl := "https://dingjia.che300.com/app/EvalResult/getPriceHistory?callback=jQuery183048247267398977844_1499239194770&provId=4&cityId=4&modelId=30304&regYear=2017&regMonth=6&mileAge=10&price=20.246191981464&_=1499239195244"
+	qburl := "https://dingjia.che300.com/app/EvalResult/getPriceHistory?callback=jQuery183048247267398977844_1499239194770&provId=" + strconv.Itoa(provid) + "&cityId=" + strconv.Itoa(cityid) + "&modelId=" + strconv.Itoa(modelid) + "&regYear=" + strconv.Itoa(regyear) + "&regMonth=" + strconv.Itoa(regmonth) + "&mileAge=" + strconv.Itoa(mileage) + "&price=" + pri + "&_=1499239195244"
   client := &http.Client{}
   reqest, _ := http.NewRequest("GET", qburl, nil)
   response,_ := client.Do(reqest)
   if response.StatusCode == 200 {
     body, _ := ioutil.ReadAll(response.Body)
     split_string := strings.Split(strings.Split(string(body),":[{")[1],"}]})")[0]
+    fmt.Println(split_string)
     sss  := strings.Split(split_string,"},{")
     for _, element := range sss {
-      props = append(props, Pricehistory{Eval_price: strings.Split(lstrings.Split(element, ":")[1],",")[0], Date: strings.Split(element, ":")[2]})
+      props = append(props, Pricehistory{Eval_price: strings.Split(strings.Split(element, ":")[1],",")[0], Date: strings.Split(element, ":")[2]})
     }
     fmt.Println(props)
   }
@@ -284,10 +311,10 @@ func getPriceHistory() []Pricehistory {
 	return props
 }
 
-func allProvPrices() ([]Provprices, []Prices){
+func allProvPrices(brand,series,model int,regDate string,mile int) ([]Provprices, []Prices){
   var props []Provprices
   var props2 []Prices
-	qburl := "https://dingjia.che300.com/app/EvalResult/allProvPrices?callback=jQuery183048247267398977844_1499239194773&brand=6&series=77&model=30304&regDate=2017-6&mile=10&_=1499239195252"
+	qburl := "https://dingjia.che300.com/app/EvalResult/allProvPrices?callback=jQuery183048247267398977844_1499239194773&brand=" + strconv.Itoa(brand) + "&series=" + strconv.Itoa(series) + "&model=" + strconv.Itoa(model) + "&regDate=" +regDate+ "&mile=" + strconv.Itoa(mile) +"&_=1499239195252"
   client := &http.Client{}
   reqest, _ := http.NewRequest("GET", qburl, nil)
   response,_ := client.Do(reqest)
@@ -295,34 +322,40 @@ func allProvPrices() ([]Provprices, []Prices){
     body, _ := ioutil.ReadAll(response.Body)
     str := strings.Split((strings.Split(string(body),":{")[2]),"},\"prices\":[{")
     str2 := strings.Split(str[0],",")
-    props = append(props, Provprices{Id: strings.Split(str2[0], ":")[1],
-                                     Drive_name: strings.Split(str2[1], ":")[1],
-                                     Model_status: strings.Split(str2[2], ":")[1],
-                                     Name: strings.Split(str2[21], ":")[1],
-                                     Short_name: strings.Split(str2[22], ":")[1],
-                                     Market_date: strings.Split(str2[23], ":")[1],
-                                     Stop_make_year: strings.Split(str2[24], ":")[1],
-                                     Level_id: strings.Split(str2[25], ":")[1],
-                                     Level: strings.Split(str2[26], ":")[1],
-                                     Sname: strings.Split(str2[27], ":")[1],
-                                     Ssname: strings.Split(str2[28], ":")[1],
-                                     Maker_name: strings.Split(str2[29], ":")[1],
-                                     Maker_type: strings.Split(str2[30], ":")[1],
-                                     Star: strings.Split(str2[31], ":")[1],
-                                     Sid: strings.Split(str2[32], ":")[1],
-                                     Bid: strings.Split(str2[33], ":")[1],
-                                     Brand_name: strings.Split(str2[34], ":")[1],
-                                     Year: strings.Split(str2[35], ":")[1],
-                                     Price: strings.Split(str2[36], ":")[1],
-                                     Discharge_standard: strings.Split(str2[37], ":")[1],
-                                     Gear_type: strings.Split(str2[38], ":")[1],
-                                     Liter: strings.Split(str2[39], ":")[1],
-                                     Liter_turbo: strings.Split(str2[40], ":")[1],
-                                     Door_number: strings.Split(str2[41], ":")[1],
-                                     Body_type: strings.Split(str2[42], ":")[1],
-                                     Min_reg_year: strings.Split(str2[43], ":")[1],
-                                     Max_reg_year: strings.Split(str2[44], ":")[1],
-                                     Engine_power: strings.Split(str2[45], ":")[1],
+    fmt.Println(str2)
+    str3 := strings.Split(str[0],",\"highlight_config")
+    str5 := strings.Split(str3[0],",")
+    str4 := strings.Split(str3[1],"}\",")
+    str6 := strings.Split(str4[1],",")
+
+    props = append(props, Provprices{Id: strings.Split(str5[0], ":")[1],
+                                     Drive_name: strings.Split(str5[1], ":")[1],
+                                     Model_status: strings.Split(str5[2], ":")[1],
+                                     Name: strings.Split(str6[0], ":")[1],
+                                     Short_name: strings.Split(str6[1], ":")[1],
+                                     Market_date: strings.Split(str6[2], ":")[1],
+                                     Stop_make_year: strings.Split(str6[3], ":")[1],
+                                     Level_id: strings.Split(str6[4], ":")[1],
+                                     Level: strings.Split(str6[5], ":")[1],
+                                     Sname: strings.Split(str6[6], ":")[1],
+                                     Ssname: strings.Split(str6[7], ":")[1],
+                                     Maker_name: strings.Split(str6[8], ":")[1],
+                                     Maker_type: strings.Split(str6[9], ":")[1],
+                                     Star: strings.Split(str6[10], ":")[1],
+                                     Sid: strings.Split(str6[11], ":")[1],
+                                     Bid: strings.Split(str6[12], ":")[1],
+                                     Brand_name: strings.Split(str6[13], ":")[1],
+                                     Year: strings.Split(str6[14], ":")[1],
+                                     Price: strings.Split(str6[15], ":")[1],
+                                     Discharge_standard: strings.Split(str6[16], ":")[1],
+                                     Gear_type: strings.Split(str6[17], ":")[1],
+                                     Liter: strings.Split(str6[18], ":")[1],
+                                     Liter_turbo: strings.Split(str6[19], ":")[1],
+                                     Door_number: strings.Split(str6[20], ":")[1],
+                                     Body_type: strings.Split(str6[21], ":")[1],
+                                     Min_reg_year: strings.Split(str6[22], ":")[1],
+                                     Max_reg_year: strings.Split(str6[23], ":")[1],
+                                     Engine_power: strings.Split(str6[24], ":")[1],
                                    })
     str_price := strings.Split(str[1],"}]}})")
     strr := strings.Split(str_price[0],"},{")
@@ -333,6 +366,8 @@ func allProvPrices() ([]Provprices, []Prices){
                           })
     }
   }
+  fmt.Println(props)
+  fmt.Println(props2)
 
 	return props,props2
 
