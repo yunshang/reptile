@@ -12,6 +12,9 @@ import (
   "encoding/json"
 )
 
+import "database/sql"
+import _ "github.com/go-sql-driver/mysql"
+
 type Qb struct {
 	Id      int    `json:"id"`
 	Brand_id      string    `json:"brand_id"`
@@ -154,15 +157,17 @@ func Info(c *gin.Context) {
 func Index(c *gin.Context) {
 	city_result := getCity()
 	brand_result := getBrand()
-  series_result := getseriesBrand(1)
-  model_result := getmodelBrand(13)
-	c.HTML(http.StatusOK, "index.html", gin.H{
-    "proid":     city_result[0].Prov_id,
-		"cities":    city_result,
-		"brands":    brand_result,
-		"series":    series_result,
-		"models":    model_result,
-	})
+	fmt.Println(brand_result)
+	fmt.Println(city_result)
+ //  series_result := getseriesBrand(1)
+ //  model_result := getmodelBrand(13)
+	// c.HTML(http.StatusOK, "index.html", gin.H{
+ //    "proid":     city_result[0].Prov_id,
+	// 	"cities":    city_result,
+	// 	"brands":    brand_result,
+	// 	"series":    series_result,
+	// 	"models":    model_result,
+	// })
 	return
 }
 
@@ -198,14 +203,32 @@ func getBrand() []Qb {
 		log.Fatal(err)
 	}
 
-	var qb []Qb
+ // db, err := sql.Open("mysql", "root:root@tcp(127.0.0.1:3306)/reptile?parseTime=true")
+ // defer db.Close()
+ // if err != nil{
+ //  log.Fatalln(err)
+ // }
+	//
+ // db.SetMaxIdleConns(20)
+ // db.SetMaxOpenConns(20)
+	//
+
+  var qb []Qb
 	doc.Find(".ucarselecttype_pinpaibottom_ul .list_1").Each(func(i int, s *goquery.Selection) {
     stringid, _ := s.Attr("id")
     id, _ := strconv.Atoi(stringid)
     content := s.Text()
     brand_id, _ := s.Attr("rel")
     qb = append(qb, Qb{Id: id, Brand_id: brand_id, Content: content})
+		// rs, err := db.Exec("INSERT INTO che300_brand(bid, name) VALUES (?, ?)", id, content)
+  //   fmt.Println(rs)
+		// if err != nil {
+		// 	log.Fatalln(err)
+		// }
 	})
+	// for _, b := range qb {
+ //     getseriesBrand(b.Id)
+	// }
 	return qb
 }
 
@@ -215,6 +238,15 @@ func getseriesBrand(p int) []Seriesb {
   client := &http.Client{}
   reqest, _ := http.NewRequest("GET", qburl, nil)
   response,_ := client.Do(reqest)
+	// db, err := sql.Open("mysql", "root:root@tcp(127.0.0.1:3306)/reptile?parseTime=true")
+	// defer db.Close()
+	// if err != nil{
+	// 	log.Fatalln(err)
+	// }
+	// db.SetMaxIdleConns(20)
+	// db.SetMaxOpenConns(20)
+	//
+
   if response.StatusCode == 200 {
     body, _ := ioutil.ReadAll(response.Body)
     bodystr := []byte(body)
@@ -226,6 +258,15 @@ func getseriesBrand(p int) []Seriesb {
       // fmt.Println(props)
     }
   }
+	// for _, b := range props {
+	// 	rs, err := db.Exec("INSERT INTO che300_series(uid, name, bid) VALUES (?, ?, ?)", b.Series_id, b.Series_name, p)
+	// 	modelsID, _ := strconv.Atoi(b.Series_id)
+	// 	getmodelBrand(modelsID)
+	// 	fmt.Println(rs)
+	// 	if err != nil {
+	// 		log.Fatalln(err)
+	// 	}
+	// }
 	return props
 }
 
@@ -235,6 +276,13 @@ func getmodelBrand(p int) []Modelb {
   client := &http.Client{}
   reqest, _ := http.NewRequest("GET", qburl, nil)
   response,_ := client.Do(reqest)
+	// db, err := sql.Open("mysql", "root:root@tcp(127.0.0.1:3306)/reptile?parseTime=true")
+	// defer db.Close()
+	// if err != nil{
+	// 	log.Fatalln(err)
+	// }
+	// db.SetMaxIdleConns(20)
+	// db.SetMaxOpenConns(20)
   if response.StatusCode == 200 {
     body, _ := ioutil.ReadAll(response.Body)
     bodystr := []byte(body)
@@ -246,6 +294,13 @@ func getmodelBrand(p int) []Modelb {
       // fmt.Println(props)
     }
   }
+	// for _, b := range props {
+	// 	rs, err := db.Exec("INSERT INTO che300_models(uid, name, sid) VALUES (?, ?, ?)", b.Model_id, b.Model_name, p)
+	// 	fmt.Println(rs)
+	// 	if err != nil {
+	// 		log.Fatalln(err)
+	// 	}
+	// }
 
 	return props
 }
@@ -268,7 +323,20 @@ func getCity() []City {
       // fmt.Println(props)
     }
   }
-
+	// db, err := sql.Open("mysql", "root:root@tcp(127.0.0.1:3306)/reptile?parseTime=true")
+	// defer db.Close()
+	// if err != nil{
+	// 	log.Fatalln(err)
+	// }
+ // db.SetMaxIdleConns(20)
+ // db.SetMaxOpenConns(20)
+	// for _, b := range props {
+	// 	rs, err := db.Exec("INSERT INTO che300_city(uid, name, pid) VALUES (?, ?, ?)", b.City_id, b.City_name, b.Prov_id)
+	// 	fmt.Println(rs)
+	// 	if err != nil {
+	// 		log.Fatalln(err)
+	// 	}
+	// }
 	return props
 }
 
